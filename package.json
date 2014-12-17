@@ -1,0 +1,17 @@
+{
+  "name": "watchdog",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js",
+    "test": "mkdir -p build && grunt travis --trace --verbose"
+  },
+  "dependencies": {
+    "lodash": "^2.4.1",
+    "async": "^0.2.10",
+    "request": "^2.34.0",
+    "cheerio": "^0.15.0"
+  },
+  "devDependencies": {
+  }
+}
