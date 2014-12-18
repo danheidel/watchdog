@@ -6,7 +6,10 @@ var request = require('request');
 var configPath = process.argv[2] || 'config.json';
 var queryArray = [];
 
-async.series([loadConfig]);
+async.series([
+  loadConfig,
+  initQueries
+]);
 
 function loadConfig(callback){
   var fileData;
@@ -21,17 +24,36 @@ function loadConfig(callback){
         name: parsedData[rep].name,
         url: parsedData[rep].url,
         interval: parsedData[rep].interval,
+        errorInterval: parsedData[rep].errorInterval,
         email: parsedData[rep].email,
-        sms: parsedData[rep].sms
+        sms: parsedData[rep].sms,
+        startTime: new Date()
       };
-      queryArray.add(tempPage);
+      queryArray.push(tempPage);
     }
 
     callback();
   });
+}
+
+function initQueries(callback){
+  for(var rep=0;rep<queryArray.length;rep++){
+    request(queryArray[rep].url, queryResponse.bind(null, queryArray[rep]));
+  }
+  callback();
+}
+
+function queryResponse(query, err, resp){
+  if(err || resp.statusCode != 200){
+    handleError(query, err, resp);
+  }
+
+  console.log(query);
+  console.log(err);
+  console.log((resp ? resp.statusCode : 'no response'));
 
 }
 
-function queryPage(pageData, callback){
-
+function handleError(query, err, resp){
+  console.log('error: ' + err);
 }
