@@ -16,3 +16,4 @@ node_modules/
 test/acceptance/*-results.xml
 
 config.json
+twilio.json
