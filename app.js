@@ -62,7 +62,7 @@ function sendGlobalPing(globalData){
   twilioClient.sms.messages.create({
     to: globalData.sms,
     from: twilioNumber,
-    body: 'watchdog ping'
+    body: 'watchdog ping from: ' + globalData.instanceName
   }, function(err, reply){
     if(err){
       console.error('there was an error');
