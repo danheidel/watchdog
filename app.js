@@ -38,18 +38,40 @@ function loadConfig(callback){
       process.exit();
     }
     var parsedData = JSON.parse(data);
-    for(var rep=0;rep<parsedData.length;rep++){
+    var globalData = parsedData.global;
+    setInterval(sendGlobalPing, globalData.pingInterval, globalData);
+    var serverData = parsedData.servers;
+
+    for(var rep=0;rep<serverData.length;rep++){
       var tempPage = {
-        name: parsedData[rep].name,
-        url: parsedData[rep].url,
-        interval: parsedData[rep].interval,
-        errorInterval: parsedData[rep].errorInterval,
-        email: parsedData[rep].email,
-        sms: parsedData[rep].sms
+        name: serverData[rep].name,
+        url: serverData[rep].url,
+        interval: serverData[rep].interval,
+        errorInterval: serverData[rep].errorInterval,
+        email: serverData[rep].email,
+        sms: serverData[rep].sms
       };
       queryArray.push(tempPage);
     }
     callback();
+  });
+}
+
+function sendGlobalPing(globalData){
+  console.log('sending global ping');
+  twilioClient.sms.messages.create({
+    to: globalData.sms,
+    from: twilioNumber,
+    body: 'watchdog ping'
+  }, function(err, reply){
+    if(err){
+      console.error('there was an error');
+      console.log(err);
+    } else {
+      console.log('sent message, sid: ' + reply.sid);
+      console.log('message sent to: ' + globalData.sms);
+      console.log('message sent: ' + reply.dateCreated);
+    }
   });
 }
 
