@@ -39,6 +39,8 @@ function loadConfig(callback){
     }
     var parsedData = JSON.parse(data);
     var globalData = parsedData.global;
+    //send immediate global ping to let recipient know watchdog is running
+    sendGlobalPing(globalData);
     setInterval(sendGlobalPing, globalData.pingInterval, globalData);
     var serverData = parsedData.servers;
 
