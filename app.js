@@ -3,19 +3,44 @@ var async = require('async');
 var cheerio = require('cheerio');
 var request = require('request');
 var twilio = require('twilio');
+var nodemailer = require('nodemailer');
 
-var configPath = process.argv[2] || 'config.json';
-var twilioPath = process.argv[3] || 'twilio.json';
+var emailPath = process.argv[2] || 'email.json';
+var configPath = process.argv[3] || 'config.json';
+var twilioPath = process.argv[4] || 'twilio.json';
 var queryArray = [];
 var twilioClient, twilioSID, twilioToken, twilioNumber;
+var emailTransporter, emailUser;
 
 console.log(__dirname);
 
 async.series([
+  loadEmailData,
   loadTwilioData,
   loadConfig,
   initQueries
 ]);
+
+function loadEmailData(callback){
+  fs.readFile(__dirname + '/' + emailPath, function(err, data){
+    if(err){
+      console.error('failed to read email configuration file');
+      process.exit();
+    }
+    var parsedData = JSON.parse(data);
+    emailUser = parsedData.auth.user;
+    var transportOptions = {
+      service: parsedData.service,
+      auth: {
+        user: emailUser,
+        pass: parsedData.auth.password
+      }
+    }
+    console.log(transportOptions);
+    emailTransporter = nodemailer.createTransport(transportOptions);
+    callback();
+  })
+}
 
 function loadTwilioData(callback){
   fs.readFile(__dirname + '/' + twilioPath, function(err, data){
@@ -72,9 +97,21 @@ function sendGlobalPing(globalData){
       console.error('there was an error');
       console.log(err);
     } else {
-      console.log('sent message, sid: ' + reply.sid);
+      console.log('sent sms, sid: ' + reply.sid);
       console.log('message sent to: ' + globalData.sms);
       console.log('message sent: ' + reply.dateCreated);
+    }
+  });
+  emailTransporter.sendMail({
+      from: 'watchdog process' + emailUser,
+      to: globalData.email,
+      subject: 'watchdog heartbeat ping',
+      text: 'Ping to let you know the watchdog process is still active'
+    }, function(err, info){
+    if(err){
+      console.error(err);
+    } else {
+      console.log('email sent ' + info.response);
     }
   });
 }
@@ -109,9 +146,21 @@ function handleError(query, err, resp){
       console.error('there was an error');
       console.log(err);
     } else {
-      console.log('sent message, sid: ' + reply.sid);
+      console.log('sent sms, sid: ' + reply.sid);
       console.log('message sent to: ' + query.sms);
       console.log('message sent: ' + reply.dateCreated);
+    }
+  });
+  emailTransporter.sendMail({
+    from: 'watchdog process' + emailUser,
+    to: query.email,
+    subject: 'watchdog error',
+    text: 'watchdog could not access website at: ' + query.url
+  }, function(err, info){
+    if(err){
+      console.error(err);
+    } else {
+      console.log('email sent' + info.response);
     }
   })
 }
