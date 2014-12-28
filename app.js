@@ -9,6 +9,8 @@ var twilioPath = process.argv[3] || 'twilio.json';
 var queryArray = [];
 var twilioClient, twilioSID, twilioToken, twilioNumber;
 
+console.log(__dirname);
+
 async.series([
   loadTwilioData,
   loadConfig,
@@ -16,7 +18,7 @@ async.series([
 ]);
 
 function loadTwilioData(callback){
-  fs.readFile(twilioPath, function(err, data){
+  fs.readFile(__dirname + '/' + twilioPath, function(err, data){
     if(err){
       console.error('failed to read Twilio config file');
       process.exit();
@@ -32,7 +34,7 @@ function loadTwilioData(callback){
 
 function loadConfig(callback){
   var fileData;
-  fs.readFile(configPath, function(err, data){
+  fs.readFile(__dirname + '/' + configPath, function(err, data){
     if(err){
       console.error('failed to read config file');
       process.exit();
