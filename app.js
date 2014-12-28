@@ -9,6 +9,7 @@ var emailPath = process.argv[2] || 'email.json';
 var configPath = process.argv[3] || 'config.json';
 var twilioPath = process.argv[4] || 'twilio.json';
 var queryArray = [];
+var globalData;
 var twilioClient, twilioSID, twilioToken, twilioNumber;
 var emailTransporter, emailUser;
 
@@ -65,10 +66,10 @@ function loadConfig(callback){
       process.exit();
     }
     var parsedData = JSON.parse(data);
-    var globalData = parsedData.global;
+    globalData = parsedData.global;
     //send immediate global ping to let recipient know watchdog is running
-    sendGlobalPing(globalData);
-    setInterval(sendGlobalPing, globalData.pingInterval, globalData);
+    sendGlobalPing();
+    setInterval(sendGlobalPing, globalData.pingInterval);
     var serverData = parsedData.servers;
 
     for(var rep=0;rep<serverData.length;rep++){
@@ -86,7 +87,7 @@ function loadConfig(callback){
   });
 }
 
-function sendGlobalPing(globalData){
+function sendGlobalPing(){
   console.log('sending global ping');
   twilioClient.sms.messages.create({
     to: globalData.sms,
@@ -105,7 +106,7 @@ function sendGlobalPing(globalData){
   emailTransporter.sendMail({
       from: 'watchdog process' + emailUser,
       to: globalData.email,
-      subject: 'watchdog heartbeat ping',
+      subject: 'watchdog heartbeat ping from: ' + globalData.instanceName,
       text: 'Ping to let you know the watchdog process is still active'
     }, function(err, info){
     if(err){
@@ -140,7 +141,7 @@ function handleError(query, err, resp){
   twilioClient.sms.messages.create({
     to: query.sms,
     from: twilioNumber,
-    body: 'error accessing: ' + query.url
+    body: 'error accessing: ' + query.url + ' from: ' + globalData.instanceName
   }, function(err, reply){
     if(err){
       console.error('there was an error');
@@ -154,8 +155,8 @@ function handleError(query, err, resp){
   emailTransporter.sendMail({
     from: 'watchdog process' + emailUser,
     to: query.email,
-    subject: 'watchdog error',
-    text: 'watchdog could not access website at: ' + query.url
+    subject: 'watchdog error from: ' + globalData.instanceName,
+    text: 'watchdog could not access website at: ' + query.url + ' from: ' + globalData.instanceName
   }, function(err, info){
     if(err){
       console.error(err);
